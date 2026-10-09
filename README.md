@@ -1,106 +1,47 @@
-# DiscoverWorks Internal Analysis Dashboard
+# DiscoverWorks analysis dashboard
 
-A browser-based dashboard for the Ballmer evaluation team to explore the approved 2026 DiscoverWorks final datasets.
+An internal exploration workspace for the Ballmer evaluation team’s 2026 final data.
 
-Live dashboard: https://isaacashmgt.github.io/Survey-response-breakdown-tool/
+**Live dashboard:** https://isaacashmgt.github.io/Survey-response-breakdown-tool/
 
-## Start an analysis
+## Team workflow
 
-1. Open [2026 Internal Analysis Dashboard Data](https://docs.google.com/spreadsheets/d/1PdSeO-Vkq41fwT_ChPR_W45IpM0Gp7uXhbI4sGskHmY/edit) with the Google account that has team-workbook access.
-2. In Google Sheets, select **File**, **Download**, then **Microsoft Excel (.xlsx)**. Keep the full workbook together.
-3. Upload or drop that workbook into the dashboard.
-4. Choose **Educator Clean**, **Family - Family Level**, **Family - Child Level**, **Student Clean**, **Site Level**, or **Grantee Level** using the dataset selector.
+1. Open the linked **2026 Internal Analysis Dashboard Data** Google Sheet with an account that has access.
+2. Choose **File → Download → Microsoft Excel (.xlsx)**. Keep the entire workbook.
+3. Drop the workbook into the dashboard. Parsing happens locally in a browser worker.
+4. Choose a survey/data view and scroll through its questions. No question selection or report generation is required.
+5. Optionally choose a breakdown: another question in the same survey, a site characteristic, or a grantee characteristic.
+6. Use the optional filters to narrow the population. Switch between Breakdown Report and Charts without losing the analysis setup. The question search helps find a question; it does not change the population.
 
-The workbook's **Refresh Status** tab records each source and publication date. Download a fresh copy when returning to the dashboard. The README, Refresh Status, and Data Dictionary tabs support the workbook and are excluded from dataset selectors.
+Workbook data stays in browser memory. This repository and the public Pages site contain application code and branding only. The private workbook and frozen source tables are not changed by the dashboard.
 
-## What it does
+## Application files
 
-- Upload the complete DiscoverWorks `.xlsx` workbook.
-- Choose one of the six approved DiscoverWorks datasets.
-- Create multiple chart cards from the same file.
-- Let users choose any non-metadata response column for a chart, including empty and open-ended-style columns.
-- Choose one or more response questions and generate all selected charts with a single action, without duplicating charts already in the workspace.
-- Analyze one column by response count and percentage.
-- Split semicolon-delimited multi-select responses into individual dashboard choices without changing raw data.
-- Compare one column against another.
-- Add one or more checklist filters.
-- Hide selected responses or manually combine similar response labels.
-- Navigate focused Charts, Question Breakdown Report, and Data Preview workspaces.
-- Generate sheet-style question breakdown reports from the active workbook.
-- Preview the first 100 rows, search the dataset, inspect column quality, and hide columns from chart analysis without changing the source.
-- Choose response columns to include with checked lists.
-- Optionally break those response columns down by one selected column.
-- Filter breakdown reports by one selected column with fewer than 500 unique values.
-- View the generated breakdown table in a fixed scrollable panel with percentage heat maps.
-- Hide open-ended-style columns from report choices when they have more than 15 unique responses.
-- Export chart images, summary tables, and filtered data as CSV.
-- Export generated breakdown reports as CSV or Excel.
-- Optionally link the active survey to another sheet or survey file using user-selected matching fields.
-- Review matched/unmatched rates, inspect duplicates, and view or download unmatched primary records.
-- Use any linked-survey question as a chart, filter, or report breakdown, including multi-select questions.
+- `index.html`: workbook instructions and exploration workspace.
+- `explorer.css`: exploration layout; `style.css` supplies existing branding and landing-page styles.
+- `explorer.js`: shared controls, filtering, lazy question rendering, tables/charts, and optional CSV/PNG exports.
+- `explorer-data.js`: question catalog, common breakdown catalogs, exact-key left joins, multi-select handling, and response ordering.
+- `explorer-worker.js`: reads the recognized workbook tabs using SheetJS. It returns only the tab values needed by the explorer.
 
-Uploaded files are processed only in your browser. The app does not use a backend, database, sign-in, API key, or paid service.
+The previous general-purpose interface files remain in the repository for history and compatibility; they are not loaded by the exploration page.
 
-## Files
+## Analysis conventions
 
-- `index.html`
-- `style.css`
-- `script.js`
-- `data-dictionary.js`
-- `README.md`
+- The six supported tabs are Educator Clean, Family - Family Level, Family - Child Level, Student Clean, Site Level, and Grantee Level. README, Refresh Status, and Data Dictionary are supporting tabs, not analysis views.
+- Question lists exclude IDs, metadata, provenance, quality flags, and narrative fields. Matrix questions combine the parent prompt with the sub-item. Helper checkbox columns are hidden when a parent multi-select field exists. Student questions 9 and 10 group their option fields into their parent question.
+- Breakdown catalogs are reusable lists by source; they do not depend on the question currently being displayed. No distinct-value-count rule decides whether something is a survey question.
+- Site/grantee attributes join automatically by resolved MGT IDs. Student `site_code`/`grantee_code` correspond to site/grantee IDs. Missing or duplicate secondary keys never multiply or remove primary records.
+- Family-level answers remain at family-response grain. Families with multiple sites are not expanded into repeated household answers. Use child questions for child/site comparisons.
+- Student Survey includes records marked survey-available or containing survey answers. Assessment records without survey responses are not treated as survey respondents. The explorer preserves included LinkIt record grain; it does not collapse records by Final Temp ID.
+- Percentages use records answering the question within each group. Missing answers are shown separately. Checkbox questions with explicit zeroes are answered even when no option was selected.
+- Multi-select questions can total above 100%. Multi-select breakdown groups overlap; their bases must not be summed.
+- Numeric questions show count, missing count, mean, median, minimum, and maximum. Numeric characteristics offered as categorical breakdowns use explicitly labeled fixed ranges.
+- CSV exports include question, breakdown, counting unit, filter context, answered/missing bases, and source workbook. Chart downloads include question and analysis context. Charts with many groups use pages; tables retain all groups.
 
-The app uses CDN links for:
+## Deployment
 
-- SheetJS
-- Chart.js
-- Chart.js Data Labels plugin
+GitHub Pages serves the repository root from `main`. Push application changes to `main` to publish. No database, workbook credentials, or server-side data ingestion is needed.
 
-## Eligible chart selection
+For local preview, run `python3 -m http.server 8873 --bind 127.0.0.1` in this directory and open http://127.0.0.1:8873/.
 
-The Charts workspace lists every non-metadata response column before generating anything. Select individual questions or **Select all**, adjust the selection as needed, and choose **Generate Selected Charts**. Blank responses are not shown in generated charts. Existing charts are preserved, and repeating generation adds only selected questions that do not already have a chart. Each generated chart defaults to an automatic view, and its header **View** selector lets you switch to horizontal or vertical bars, pie, doughnut, line, or table-only output. For stacked charts, choose a comparison column in the chart settings and then select a stacked comparison view.
-
-## Optional Data Dictionary
-
-An uploaded workbook may include a sheet named **Data Dictionary**. Put the survey sheet name in column A, the original/header name in column B, and the full display question in column C. A header row is optional. The analyzer matches trimmed, case-insensitive sheet and header names, applies mappings independently per survey sheet, and falls back to the original header when a mapping or display question is missing. Raw headers remain the internal data keys, so filters, matching, and calculations are not changed by display text.
-
-## Multi-select responses
-
-For dashboard charts, filters, and breakdown reports, semicolons separate multiple selected choices. Each choice is counted independently and choices are sorted by descending count by default. Percentages use the number of respondents with at least one selection as the denominator, so multi-select percentages may total more than 100%. The source workbook, raw response values, and data preview remain unchanged.
-
-## Question Breakdown Report
-
-The Question Breakdown Report uses a selected data tab from the uploaded DiscoverWorks workbook.
-
-Response-column choices appear checked by default so you can uncheck anything you do not want in the output. Columns with no responses or more than 15 unique responses are hidden from report choices so empty and open-ended questions do not create unusable breakdowns. The breakdown dropdown starts with no breakdown selected; when you choose one, that choice appears above the on-screen report. The report filter lets you select a column with fewer than 500 unique values, then uncheck values you want to exclude.
-
-The dashboard uses the downloaded file. It does not connect directly to Google Sheets or change workbook sharing.
-
-## Linked survey analysis
-
-After loading a primary survey, open **Link a secondary survey**. The secondary survey can be another sheet in the active workbook or a separate Excel/CSV file. Select one matching field from each survey, review the match diagnostics, and then choose a secondary question for disaggregation.
-
-Matching ignores capitalization, surrounding whitespace, common punctuation, and spacing differences. Primary rows without a unique secondary match are reported and excluded only while linked analysis is active. Duplicate secondary keys are treated as ambiguous and are never selected automatically. Removing the link restores the original single-survey workflow.
-
-Multi-select secondary answers separated by commas, semicolons, pipes, or line breaks are expanded into category memberships. A primary response can therefore appear in more than one linked category. Linked reports include category-level matched-site and survey-response counts, and those rows are included in CSV and Excel report exports.
-
-## Run locally
-
-Open `index.html` in your browser.
-
-## Deploy with GitHub Pages
-
-1. Create a GitHub repository.
-2. Upload the project files.
-3. Open the repository settings.
-4. Open the Pages section.
-5. Select deployment from the main branch.
-6. Open the generated GitHub Pages URL.
-
-## Notes
-
-- The first row is treated as the column header row.
-- Completely empty rows are ignored.
-- Blank cells can be grouped as `No Response` when a chart is configured to include blanks.
-- Zero and `false` values are preserved as valid responses.
-- The original uploaded file is not changed.
-- The Student Clean tab can contain more than 50,000 rows. Larger datasets take longer to parse and analyze in the browser.
+`npm run build` packages the application routes for the existing worker-style deployment. Pages serves the source files directly.
