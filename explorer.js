@@ -5,10 +5,11 @@ const number = value => Number(value).toLocaleString('en-US', { maximumFractionD
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const MISSING = '__missing_breakdown__';
 const COLORS = ['#087f73', '#438ec4', '#e0a44a', '#9675b7', '#cc7286', '#699d69', '#677f98', '#c78251', '#59aab0', '#9a9d56', '#7d88c7', '#b37b9e'];
+const CHART_GROUP_PAGE_SIZE = 6;
 let model = null;
 let fileName = '';
 let currentView = '';
-let mode = 'table';
+let mode = 'chart';
 let context = null;
 let observer = null;
 let filterSequence = 0;
@@ -288,29 +289,40 @@ function wrapLabel(label, width = 58) {
 function drawChart(card, question, result, page = 0) {
   if (!window.Chart) { card.querySelector('.chart-wrap').innerHTML = '<p class="empty-result">Charts could not load. Counts and percentages remain available below.</p>'; return; }
   const isBreakdown = Boolean(context.breakdown);
-  const pageSize = 20;
+  const pageSize = CHART_GROUP_PAGE_SIZE;
   const groups = isBreakdown ? result.groups.slice(page * pageSize, (page + 1) * pageSize) : result.groups;
   const canvas = card.querySelector('canvas');
   const old = charts.get(question.id); if (old) old.destroy();
-  card.querySelector('.chart-wrap').style.height = `${Math.max(260, (isBreakdown ? groups.length : result.answers.length) * 32 + 155)}px`;
-  canvas.setAttribute('aria-label', `${question.label}${isBreakdown ? ` by ${context.breakdown.label}` : ''}. Percentages and counts are available in the following table.`);
-  const dataset = isBreakdown ? result.answers.map((answer, index) => ({ label: answer, backgroundColor: COLORS[index % COLORS.length], data: groups.map(group => group.answered ? (group.counts.get(answer) || 0) / group.answered * 100 : null) })) : [{ label: '% of answering records', backgroundColor: '#087f73', data: result.answers.map(answer => groups[0].answered ? (groups[0].counts.get(answer) || 0) / groups[0].answered * 100 : null) }];
+  const wrap = card.querySelector('.chart-wrap');
+  const legendTitle = isBreakdown ? wrapLabel(context.breakdown.label, Math.max(25, Math.floor((wrap.clientWidth - 40) / 6.5))) : [];
+  const rowHeight = isBreakdown ? Math.max(32, groups.length * 13 + 14) : 32;
+  wrap.style.height = `${Math.max(280, result.answers.length * rowHeight + 155 + legendTitle.length * 15)}px`;
+  canvas.setAttribute('aria-label', `${question.label}. Answer options are on the vertical axis.${isBreakdown ? ` Grouped bars show ${context.breakdown.label}. Groups shown: ${groups.map(group => group.label).join(', ')}.` : ''} Percentages and counts are available in the following table.`);
+  const dataset = groups.map((group, index) => ({
+    label: isBreakdown ? group.label : '% of answering records',
+    backgroundColor: COLORS[(page * pageSize + index) % COLORS.length],
+    borderRadius: 3,
+    maxBarThickness: isBreakdown ? 14 : 20,
+    categoryPercentage: 0.8,
+    barPercentage: 0.9,
+    data: result.answers.map(answer => group.answered ? (group.counts.get(answer) || 0) / group.answered * 100 : null)
+  }));
   const chart = new Chart(canvas, {
     type: 'bar',
-    data: { labels: (isBreakdown ? groups.map(group => group.label) : result.answers).map(label => wrapLabel(label, 35)), datasets: dataset },
+    data: { labels: result.answers.map(label => wrapLabel(label, 35)), datasets: dataset },
     options: {
       responsive: true, maintainAspectRatio: false, indexAxis: 'y', animation: false,
       plugins: {
-        title: { display: true, text: [...wrapLabel(question.label, 85), ...(isBreakdown ? wrapLabel(`By ${context.breakdown.label}`, 85) : [])], align: 'start', color: '#294e59', font: { size: 12, weight: '600' }, padding: { bottom: 18 } },
-        legend: { display: isBreakdown, position: 'bottom', title: { display: isBreakdown, text: 'Answer to the question above' }, labels: { boxWidth: 12, font: { size: 10 } } },
-        tooltip: { callbacks: { label: item => { const group = isBreakdown ? groups[item.dataIndex] : groups[0]; const answer = isBreakdown ? item.dataset.label : result.answers[item.dataIndex]; return `${answer}: ${percent(group.counts.get(answer) || 0, group.answered)} (n=${number(group.counts.get(answer) || 0)}; answered N=${number(group.answered)})`; } } }
+        title: { display: true, text: wrapLabel(question.label, 85), align: 'start', color: '#294e59', font: { size: 12, weight: '600' }, padding: { bottom: 18 } },
+        legend: { display: isBreakdown, position: 'bottom', title: { display: isBreakdown, text: legendTitle, color: '#294e59', font: { size: 11, weight: '600', lineHeight: 1.3 }, padding: { top: 16, bottom: 8 + Math.max(0, legendTitle.length - 1) * 14.3 } }, labels: { boxWidth: 12, boxHeight: 12, padding: 16, font: { size: 11 } } },
+        tooltip: { callbacks: { label: item => { const group = groups[item.datasetIndex]; const answer = result.answers[item.dataIndex]; return `${isBreakdown ? `${group.label}: ` : ''}${answer}: ${percent(group.counts.get(answer) || 0, group.answered)} (n=${number(group.counts.get(answer) || 0)}; answered N=${number(group.answered)})`; } } }
       },
-      scales: { x: { beginAtZero: true, stacked: isBreakdown, ...(question.type !== 'multi' ? { max: 100 } : {}), title: { display: true, text: '% of answering records within each group' }, ticks: { callback: value => `${value}%` }, grid: { color: '#edf2f3' } }, y: { stacked: isBreakdown, grid: { display: false }, ticks: { font: { size: 10 } } } }
+      scales: { x: { beginAtZero: true, stacked: false, max: 100, title: { display: true, text: isBreakdown ? '% of answering records within each group' : '% of answering records' }, ticks: { callback: value => `${value}%` }, grid: { color: '#edf2f3' } }, y: { stacked: false, grid: { display: false }, ticks: { autoSkip: false, font: { size: 11 } } } }
     }
   });
   charts.set(question.id, chart);
   const actions = card.querySelector('.chart-actions');
-  actions.innerHTML = `<span>${isBreakdown && result.groups.length > pageSize ? `Groups ${page * pageSize + 1}–${Math.min((page + 1) * pageSize, result.groups.length)} of ${number(result.groups.length)} · Table includes all groups` : ''}</span><div>${isBreakdown && result.groups.length > pageSize ? '<button class="ghost-btn previous-groups" type="button">← Previous</button><button class="ghost-btn next-groups" type="button">Next →</button>' : ''}<button class="text-btn download-chart" type="button">Download chart</button></div>`;
+  actions.innerHTML = `<span>${isBreakdown && result.groups.length > pageSize ? `Groups ${page * pageSize + 1}–${Math.min((page + 1) * pageSize, result.groups.length)} of ${number(result.groups.length)} · All answer options shown · Table includes all groups` : ''}</span><div>${isBreakdown && result.groups.length > pageSize ? '<button class="ghost-btn previous-groups" type="button">← Previous</button><button class="ghost-btn next-groups" type="button">Next →</button>' : ''}<button class="text-btn download-chart" type="button">Download chart</button></div>`;
   if (actions.querySelector('.previous-groups')) {
     actions.querySelector('.previous-groups').disabled = page === 0;
     actions.querySelector('.next-groups').disabled = (page + 1) * pageSize >= result.groups.length;
@@ -321,7 +333,7 @@ function drawChart(card, question, result, page = 0) {
 }
 
 function downloadChart(canvas, question, page) {
-  const notes = [context.view.label, `Unit: ${context.view.grain}. ${footnote(question)}`, activeFilters().length ? `Filters: ${activeFilters().map(filterDescription).join('; ')}` : 'Filters: none', `Source: ${fileName}${context.groups.length > 20 ? `. Chart group page ${page + 1}.` : ''}`];
+  const notes = [context.view.label, `Unit: ${context.view.grain}. ${footnote(question)}`, activeFilters().length ? `Filters: ${activeFilters().map(filterDescription).join('; ')}` : 'Filters: none', `Source: ${fileName}${context.groups.length > CHART_GROUP_PAGE_SIZE ? `. Chart group page ${page + 1}.` : ''}`];
   const lines = notes.flatMap(note => wrapLabel(note, Math.max(40, Math.floor(canvas.width / 7))));
   const output = document.createElement('canvas'); output.width = canvas.width; output.height = canvas.height + lines.length * 15 + 28;
   const ctx = output.getContext('2d'); ctx.fillStyle = 'white'; ctx.fillRect(0, 0, output.width, output.height); ctx.drawImage(canvas, 0, 0);

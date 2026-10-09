@@ -11,7 +11,7 @@ An internal exploration workspace for the Ballmer evaluation team’s 2026 final
 3. Drop the workbook into the dashboard. Parsing happens locally in a browser worker.
 4. Choose a survey/data view and scroll through its questions. No question selection or report generation is required.
 5. Optionally choose a breakdown: another question in the same survey, a site characteristic, or a grantee characteristic.
-6. Use the optional filters to narrow the population. Switch between Breakdown Report and Charts without losing the analysis setup. The question search helps find a question; it does not change the population.
+6. Charts open by default. Use the optional filters to narrow the population, or switch to Breakdown tables without losing the analysis setup. The question search helps find a question; it does not change the population.
 
 Workbook data stays in browser memory. This repository and the public Pages site contain application code and branding only. The private workbook and frozen source tables are not changed by the dashboard.
 
@@ -36,7 +36,8 @@ The previous general-purpose interface files remain in the repository for histor
 - Percentages use records answering the question within each group. Missing answers are shown separately. Checkbox questions with explicit zeroes are answered even when no option was selected.
 - Multi-select questions can total above 100%. Multi-select breakdown groups overlap; their bases must not be summed.
 - Numeric questions show count, missing count, mean, median, minimum, and maximum. Numeric characteristics offered as categorical breakdowns use explicitly labeled fixed ranges.
-- CSV exports include question, breakdown, counting unit, filter context, answered/missing bases, and source workbook. Chart downloads include question and analysis context. Charts with many groups use pages; tables retain all groups.
+- Chart answer options stay on the vertical axis. Breakdowns use grouped horizontal bars, with the breakdown question or characteristic above the category legend. Each bar uses the answering records within its own group as the denominator.
+- CSV exports include question, breakdown, counting unit, filter context, answered/missing bases, and source workbook. Chart downloads include question and analysis context. Charts with more than six groups use pages while keeping every answer option visible; tables retain all groups.
 
 ## Deployment
 
