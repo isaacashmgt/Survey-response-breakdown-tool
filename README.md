@@ -1,12 +1,22 @@
-# Survey Response Analyzer
+# DiscoverWorks Internal Analysis Dashboard
 
-A static web app for analyzing Excel, CSV, and public Google Sheets survey-style data directly in the browser.
+A browser-based dashboard for the Ballmer evaluation team to explore the approved 2026 DiscoverWorks final datasets.
+
+Live dashboard: https://isaacashmgt.github.io/Survey-response-breakdown-tool/
+
+## Start an analysis
+
+1. Open [2026 Internal Analysis Dashboard Data](https://docs.google.com/spreadsheets/d/1PdSeO-Vkq41fwT_ChPR_W45IpM0Gp7uXhbI4sGskHmY/edit) with the Google account that has team-workbook access.
+2. In Google Sheets, select **File**, **Download**, then **Microsoft Excel (.xlsx)**. Keep the full workbook together.
+3. Upload or drop that workbook into the dashboard.
+4. Choose **Educator Clean**, **Family - Family Level**, **Family - Child Level**, **Student Clean**, **Site Level**, or **Grantee Level** using the dataset selector.
+
+The workbook's **Refresh Status** tab records each source and publication date. Download a fresh copy when returning to the dashboard. The README, Refresh Status, and Data Dictionary tabs support the workbook and are excluded from dataset selectors.
 
 ## What it does
 
-- Upload `.xlsx`, `.xls`, or `.csv` files.
-- Load a public Google Sheet that does not require sign-in.
-- Choose a sheet when an Excel file has multiple sheets.
+- Upload the complete DiscoverWorks `.xlsx` workbook.
+- Choose one of the six approved DiscoverWorks datasets.
 - Create multiple chart cards from the same file.
 - Let users choose any non-metadata response column for a chart, including empty and open-ended-style columns.
 - Choose one or more response questions and generate all selected charts with a single action, without duplicating charts already in the workspace.
@@ -16,7 +26,7 @@ A static web app for analyzing Excel, CSV, and public Google Sheets survey-style
 - Add one or more checklist filters.
 - Hide selected responses or manually combine similar response labels.
 - Navigate focused Charts, Question Breakdown Report, and Data Preview workspaces.
-- Generate sheet-style question breakdown reports from the active workbook or public Google Sheet.
+- Generate sheet-style question breakdown reports from the active workbook.
 - Preview the first 100 rows, search the dataset, inspect column quality, and hide columns from chart analysis without changing the source.
 - Choose response columns to include with checked lists.
 - Optionally break those response columns down by one selected column.
@@ -59,18 +69,11 @@ For dashboard charts, filters, and breakdown reports, semicolons separate multip
 
 ## Question Breakdown Report
 
-The Question Breakdown Report uses the currently active dataset. It can use:
-
-- The uploaded workbook.
-- A public Google Sheet link that can be opened without signing in. Loaded public sheets can also be charted and used for breakdown reports.
-
-For best results, include sheets like:
-
-- A raw data sheet with one header row.
+The Question Breakdown Report uses a selected data tab from the uploaded DiscoverWorks workbook.
 
 Response-column choices appear checked by default so you can uncheck anything you do not want in the output. Columns with no responses or more than 15 unique responses are hidden from report choices so empty and open-ended questions do not create unusable breakdowns. The breakdown dropdown starts with no breakdown selected; when you choose one, that choice appears above the on-screen report. The report filter lets you select a column with fewer than 500 unique values, then uncheck values you want to exclude.
 
-Private Google Sheets are not connected in this version because that would require Google sign-in/API setup.
+The dashboard uses the downloaded file. It does not connect directly to Google Sheets or change workbook sharing.
 
 ## Linked survey analysis
 
@@ -100,4 +103,4 @@ Open `index.html` in your browser.
 - Blank cells can be grouped as `No Response` when a chart is configured to include blanks.
 - Zero and `false` values are preserved as valid responses.
 - The original uploaded file is not changed.
-- The app is designed for normal Excel and CSV files up to about 50,000 rows.
+- The Student Clean tab can contain more than 50,000 rows. Larger datasets take longer to parse and analyze in the browser.

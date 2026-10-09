@@ -7,6 +7,7 @@
   const REPORT_UNIQUE_VALUE_LIMIT = 15;
   const REPORT_FILTER_UNIQUE_VALUE_LIMIT = 500;
   const UPLOADED_SOURCE_ID = 'uploaded-workbook';
+  const DISCOVERWORKS_DATASETS = ['Educator Clean', 'Family - Family Level', 'Family - Child Level', 'Student Clean', 'Site Level', 'Grantee Level'];
   const rootStyles = getComputedStyle(document.documentElement);
   const COLORS = Array.from({ length: 8 }, (_, index) =>
     rootStyles.getPropertyValue(`--chart-${index + 1}`).trim()
@@ -104,16 +105,12 @@
     selectedChartCount: document.getElementById('selectedChartCount'),
     chartGenerationStatus: document.getElementById('chartGenerationStatus'),
     chartEligibilityHint: document.getElementById('chartEligibilityHint'),
-    emptyState: document.getElementById('emptyState'),
-    sampleDataBtn: document.getElementById('sampleDataBtn'),
     changeSheetBtn: document.getElementById('changeSheetBtn'),
     replaceFileBtn: document.getElementById('replaceFileBtn'),
     clearDataBtn: document.getElementById('clearDataBtn'),
     chartTemplate: document.getElementById('chartCardTemplate'),
     filterTemplate: document.getElementById('filterTemplate'),
     reportSourceSelect: document.getElementById('reportSourceSelect'),
-    publicSheetUrl: document.getElementById('publicSheetUrl'),
-    loadPublicSheetBtn: document.getElementById('loadPublicSheetBtn'),
     reportStatus: document.getElementById('reportStatus'),
     reportQuestionSearch: document.getElementById('reportQuestionSearch'),
     selectAllQuestionsBtn: document.getElementById('selectAllQuestionsBtn'),
@@ -191,7 +188,6 @@
     state.selectedChartColumns = event.target.checked ? new Set(state.eligibleChartColumns) : new Set();
     renderChartSelection();
   });
-  els.loadPublicSheetBtn.addEventListener('click', loadPublicGoogleSheet);
   els.reportSourceSelect.addEventListener('change', renderReportControls);
   els.reportDataSheetSelect.addEventListener('change', renderReportColumns);
   els.primaryBreakdownSelect.addEventListener('change', syncBreakdownQuestionSelection);
@@ -199,14 +195,13 @@
   els.generateReportBtn.addEventListener('click', generateDistributionReport);
   els.downloadReportCsvBtn.addEventListener('click', downloadDistributionCsv);
   els.downloadReportXlsxBtn.addEventListener('click', downloadDistributionXlsx);
-  els.sampleDataBtn.addEventListener('click', loadSampleData);
   els.changeSheetBtn.addEventListener('click', showSheetPicker);
   els.replaceFileBtn.addEventListener('click', () => els.fileInput.click());
   els.clearDataBtn.addEventListener('click', async () => {
     if (await requestConfirmation('Clear this dataset?', 'Charts, filters, and the generated report will be removed. Your original file will not be changed.', 'Clear data')) {
       resetDataset();
       els.fileInput.value = '';
-      showStatus('Dataset cleared. Choose another source when you are ready.', '');
+      showStatus('Workbook cleared. Upload the DiscoverWorks workbook when you are ready.', '');
       showToast('Dataset cleared.');
     }
   });
@@ -361,12 +356,12 @@
   async function loadFile(file) {
 
     const extension = file.name.split('.').pop().toLowerCase();
-    if (!['xlsx', 'xls', 'csv'].includes(extension)) {
-      showStatus('Please choose an .xlsx, .xls, or .csv file.', 'error');
+    if (extension !== 'xlsx') {
+      showStatus('Choose the .xlsx workbook downloaded from the DiscoverWorks Google Sheet.', 'error');
       return;
     }
 
-    showStatus('Reading your file...', 'loading');
+    showStatus('Opening the DiscoverWorks workbook. The full file may take a minute to load...', 'loading');
     setButtonLoading(els.replaceFileBtn, true, 'Reading…');
     resetDataset();
 
@@ -376,24 +371,25 @@
       showStatus('Analyzing rows and columns...', 'loading');
       await yieldToBrowser();
 
-      if (!workbook.SheetNames.length) {
-        throw new Error('No sheets were found in this file.');
+      const datasetNames = getSurveySheetNames(workbook.SheetNames);
+      if (!datasetNames.length) {
+        throw new Error('No DiscoverWorks datasets were found. Download the full workbook from the Google Sheet linked above.');
       }
 
       upsertReportSource(UPLOADED_SOURCE_ID, `Uploaded: ${file.name}`, workbook);
-      activateWorkbook(workbook, file.name, workbook.SheetNames[0]);
+      activateWorkbook(workbook, file.name, datasetNames[0]);
 
       if (state.rows.length > 50000) {
         showStatus('Large file warning: this app is designed for normal files up to about 50,000 rows. It may take longer to update charts.', 'warning');
         showToast('Large dataset loaded. Some updates may take longer.', 'warning');
       } else {
-        showStatus('File loaded. Your data stays in this browser.', '');
+        showStatus('DiscoverWorks workbook loaded. Choose a dataset above to start exploring. Your data stays in this browser.', '');
         showToast(`${file.name} loaded successfully.`);
       }
     } catch (error) {
       console.error(error);
       resetDataset();
-      showStatus('This file could not be opened. It may be damaged or in an unsupported format.', 'error');
+      showStatus(error.message || 'Download the DiscoverWorks workbook again, then upload the .xlsx file.', 'error');
       showToast('The file could not be opened.', 'error');
     } finally {
       setButtonLoading(els.replaceFileBtn, false);
@@ -481,7 +477,6 @@
   function renderDataset() {
     const hasData = state.rows.length > 0 && state.columns.length > 0;
     const hasDataset = Boolean(state.workbook && state.allRows.length);
-    els.emptyState.classList.toggle('hidden', hasDataset);
     els.fileDetails.classList.toggle('hidden', !state.workbook);
     els.mainTabs.classList.toggle('hidden', !hasDataset);
     els.uploadPanel.classList.toggle('is-compact', hasDataset);
@@ -1767,41 +1762,6 @@
     els.linkDetailsDialog.showModal();
   }
 
-  async function loadPublicGoogleSheet() {
-    const url = normalizeValue(els.publicSheetUrl.value);
-    const sheetId = extractGoogleSheetId(url);
-    if (!sheetId) {
-      showReportStatus('Paste a valid public Google Sheets link.', 'error');
-      return;
-    }
-
-    showReportStatus('Loading public Google Sheet...', 'loading');
-    setButtonLoading(els.loadPublicSheetBtn, true, 'Loading…');
-    try {
-      const exportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=xlsx`;
-      const response = await fetch(exportUrl);
-      if (!response.ok) throw new Error(`Google Sheets returned ${response.status}`);
-      const buffer = await response.arrayBuffer();
-      const workbook = await parseWorkbook(buffer);
-      if (!workbook.SheetNames.length) throw new Error('No sheets found');
-      const sourceName = `Google Sheet: ${sheetId.slice(0, 8)}...`;
-      upsertReportSource(`google-${sheetId}`, sourceName, workbook);
-      activateWorkbook(workbook, sourceName, workbook.SheetNames[0]);
-      els.reportSourceSelect.value = `google-${sheetId}`;
-      renderReportControls();
-      showStatus('Public Google Sheet loaded. Your charts now use this data source.', '');
-      showReportStatus('Public Google Sheet loaded. It is used only in this browser session.', '');
-      setActiveTab('charts');
-      showToast('Google Sheet loaded successfully.');
-    } catch (error) {
-      console.error(error);
-      showReportStatus('Could not load that Google Sheet. Make sure it is public or shared with anyone who has the link.', 'error');
-      showToast('The Google Sheet could not be loaded.', 'error');
-    } finally {
-      setButtonLoading(els.loadPublicSheetBtn, false);
-    }
-  }
-
   function upsertReportSource(id, name, workbook) {
     const existing = state.sources.find(source => source.id === id);
     if (existing) {
@@ -2304,9 +2264,7 @@
 
   function getSurveySheetNames(sheetNames) {
     const names = Array.isArray(sheetNames) ? sheetNames : [];
-    return typeof DataDictionary === 'undefined'
-      ? names
-      : names.filter(name => !DataDictionary.isDictionarySheetName(name));
+    return DISCOVERWORKS_DATASETS.filter(name => names.includes(name));
   }
 
   function isDictionarySheet(sheetName) {
@@ -2580,11 +2538,6 @@
     return `${roundOne((Number(value) || 0) * 100)}%`;
   }
 
-  function extractGoogleSheetId(url) {
-    const match = normalizeValue(url).match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-    return match ? match[1] : '';
-  }
-
   function safeSheetName(value) {
     return (normalizeValue(value).replace(/[\\/?*:[\]]+/g, ' ').trim() || 'Distribution').slice(0, 31);
   }
@@ -2699,37 +2652,12 @@
   }
 
   function showSheetPicker() {
-    if (!state.workbook || state.workbook.SheetNames.length <= 1) {
+    if (!state.workbook || getSurveySheetNames(state.workbook.SheetNames).length <= 1) {
       showToast('This dataset has only one sheet.', 'warning');
       return;
     }
     els.sheetPickerWrap.classList.remove('hidden');
     els.sheetSelect.focus();
-  }
-
-  function loadSampleData() {
-    const sampleRows = [
-      ['Region', 'Grade', 'Completed', 'Program rating', 'Would recommend', 'Support was helpful'],
-      ['North', '6', 'Yes', 'Excellent', 'Yes', 'Very Helpful'],
-      ['North', '7', 'Yes', 'Very Good', 'Yes', 'Helpful'],
-      ['South', '8', 'No', 'Good', 'Maybe', 'Somewhat helpful'],
-      ['East', '6', 'Yes', 'Excellent', 'Yes', 'Very Helpful'],
-      ['West', '7', 'Yes', 'Good', 'Yes', 'Helpful'],
-      ['South', '8', 'Yes', 'Fair', 'No', 'Somewhat helpful'],
-      ['East', '6', 'Yes', 'Very Good', 'Yes', 'Very Helpful'],
-      ['North', '7', 'No', 'Good', 'Maybe', 'Helpful'],
-      ['West', '8', 'Yes', 'Excellent', 'Yes', 'Very Helpful'],
-      ['South', '6', 'Yes', 'Very Good', 'Yes', 'Helpful'],
-      ['East', '7', 'Yes', 'Good', 'Yes', 'Somewhat helpful'],
-      ['West', '8', 'No', '', 'No', 'Not helpful']
-    ];
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(sampleRows), 'Sample responses');
-    resetDataset();
-    upsertReportSource(UPLOADED_SOURCE_ID, 'Sample survey data', workbook);
-    activateWorkbook(workbook, 'Sample survey data', 'Sample responses');
-    showStatus('Sample data loaded. Explore the chart, report, and preview tabs.', '');
-    showToast('Sample survey data loaded.');
   }
 
   function renderDataPreview() {

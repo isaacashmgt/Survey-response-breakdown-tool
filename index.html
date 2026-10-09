@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#087f73">
-  <title>Survey Response Analyzer</title>
+  <title>DiscoverWorks Internal Analysis Dashboard</title>
   <link rel="icon" type="image/png" href="assets/survey-response-logo.png?v=20260909-1">
   <link rel="apple-touch-icon" href="assets/survey-response-logo.png?v=20260909-1">
-  <link rel="stylesheet" href="style.css?v=20260903-2">
+  <link rel="stylesheet" href="style.css?v=20261008-1">
 </head>
 <body>
   <header class="app-header">
@@ -16,8 +16,8 @@
         <img src="assets/survey-response-logo.png?v=20260909-1" alt="" width="40" height="40">
       </div>
       <div class="brand-copy">
-        <h1>Survey Response Analyzer</h1>
-        <p>Upload, analyze, compare, and export survey responses</p>
+        <h1>DiscoverWorks Analysis Dashboard</h1>
+        <p>Ballmer evaluation team · 2026 final data</p>
       </div>
       <div class="privacy-badge" title="Uploaded files are never sent to a server">
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 8V6.5a4.5 4.5 0 0 1 9 0V8M4 8h12v9H4z"/></svg>
@@ -29,48 +29,42 @@
   <main class="app-shell">
     <section id="uploadPanel" class="upload-panel" aria-labelledby="upload-title">
       <div class="welcome-copy">
-        <div class="welcome-icon" aria-hidden="true">
-          <svg viewBox="0 0 48 48"><path d="M10 9h28v30H10z"/><path d="M17 18h14M17 24h14M17 30h9"/></svg>
-        </div>
-        <p class="eyebrow">Private, browser-based analytics</p>
-        <h2 id="upload-title">Turn survey responses into clear insights</h2>
-        <p>Start with an Excel or CSV file, or connect a public Google Sheet. No account or backend is required.</p>
+        <p class="eyebrow">2026 DiscoverWorks evaluation</p>
+        <h2 id="upload-title">Explore the team’s final data</h2>
+        <p>Download the current analysis workbook, then upload it here to explore student results, survey responses, and site and grantee information.</p>
       </div>
 
       <div class="source-cards">
+        <article class="source-card workbook-instructions" aria-labelledby="download-title">
+          <h3 id="download-title">Start with the team workbook</h3>
+          <ol class="download-steps">
+            <li><div><strong>Open the Google Sheet</strong><p><a href="https://docs.google.com/spreadsheets/d/1PdSeO-Vkq41fwT_ChPR_W45IpM0Gp7uXhbI4sGskHmY/edit" target="_blank" rel="noopener noreferrer">2026 Internal Analysis Dashboard Data <span class="sr-only">(opens in a new tab)</span></a></p><p>Use the Google account that has access to the team workbook. If you cannot open it, ask Isaac for access.</p></div></li>
+            <li><div><strong>Download the full workbook</strong><p>In Google Sheets, select <b>File</b>, then <b>Download</b>, then <b>Microsoft Excel (.xlsx)</b>. Keep all the tabs together.</p></div></li>
+            <li><div><strong>Upload and choose a dataset</strong><p>Drop the downloaded file here or select <b>Choose workbook</b>. Use the dataset selector to explore educator, family, student, site, or grantee data.</p></div></li>
+          </ol>
+          <p class="source-help">Download a fresh copy when you return. The workbook’s Refresh Status tab lists the source and publication dates for each dataset.</p>
+        </article>
+
         <article class="source-card source-card-primary">
           <div class="source-card-heading">
             <span class="card-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 15v4h14v-4"/></svg>
             </span>
-            <div><h3>Upload a file</h3><p>Excel or CSV</p></div>
+            <div><h3>Upload the DiscoverWorks workbook</h3><p>The Excel file you downloaded from Google Sheets</p></div>
           </div>
           <label class="file-drop" id="fileDrop">
             <span class="drop-illustration" aria-hidden="true">
               <svg viewBox="0 0 40 40"><path d="M8 7h18l6 6v20H8z"/><path d="M26 7v7h6M20 27V16m0 0-4 4m4-4 4 4"/></svg>
             </span>
-            <strong>Drop your file here</strong>
+            <strong>Drop the workbook here</strong>
             <span>or</span>
-            <span class="primary-btn choose-file-visual">Choose file</span>
-            <small>.xlsx, .xls, or .csv</small>
-            <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" aria-label="Choose an Excel or CSV file">
+            <span class="primary-btn choose-file-visual">Choose workbook</span>
+            <small>Microsoft Excel (.xlsx)</small>
+            <input id="fileInput" type="file" accept=".xlsx" aria-label="Choose the downloaded DiscoverWorks Excel workbook">
           </label>
+          <p class="source-help">Allow a minute for the full workbook to load.</p>
         </article>
 
-        <article class="source-card">
-          <div class="source-card-heading">
-            <span class="card-icon card-icon-sheet" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v5h4M9 12h7M9 16h7"/></svg>
-            </span>
-            <div><h3>Connect Google Sheet</h3><p>Public links only</p></div>
-          </div>
-          <label class="field public-url-field">
-            <span>Public Google Sheet link</span>
-            <input id="publicSheetUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/..." autocomplete="url">
-          </label>
-          <button id="loadPublicSheetBtn" class="secondary-btn full-btn" type="button">Load Google Sheet</button>
-          <p class="source-help">The sheet must be shared publicly or with anyone who has the link.</p>
-        </article>
       </div>
 
       <div class="privacy-note">
@@ -79,13 +73,6 @@
       </div>
       <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
 
-      <div id="emptyState" class="empty-state">
-        <div>
-          <h3>No dataset loaded</h3>
-          <p>Choose a source above to start exploring your survey responses.</p>
-        </div>
-        <button id="sampleDataBtn" class="text-btn" type="button">Try sample data</button>
-      </div>
     </section>
 
     <section id="fileDetails" class="dataset-bar hidden" aria-label="Active dataset summary">
@@ -96,11 +83,11 @@
       <div id="fileStats" class="dataset-stats"></div>
       <div class="dataset-actions">
         <label id="sheetPickerWrap" class="field compact hidden">
-          <span class="sr-only">Selected sheet</span>
-          <select id="sheetSelect" aria-label="Selected sheet"></select>
+          <span class="sr-only">Selected DiscoverWorks dataset</span>
+          <select id="sheetSelect" aria-label="Selected DiscoverWorks dataset"></select>
         </label>
-        <button id="changeSheetBtn" class="ghost-btn" type="button">Change sheet</button>
-        <button id="replaceFileBtn" class="ghost-btn" type="button">Replace file</button>
+        <button id="changeSheetBtn" class="ghost-btn" type="button">Change dataset</button>
+        <button id="replaceFileBtn" class="ghost-btn" type="button">Replace workbook</button>
         <button id="clearDataBtn" class="ghost-btn danger-text" type="button">Clear data</button>
       </div>
     </section>
@@ -484,6 +471,6 @@
   <script src="chart-rules.js?v=20260908-1"></script>
   <script src="data-dictionary.js?v=20260904-2"></script>
   <script src="linked-survey.js?v=20260904-1"></script>
-  <script src="script.js?v=20260908-2"></script>
+  <script src="script.js?v=20261008-1"></script>
 </body>
 </html>
