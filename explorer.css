@@ -1,17 +1,18 @@
-.workbook-status { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:0 4px 16px; color:var(--muted); font-size:.78rem; }
+.workbook-status { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:0 4px 10px; color:var(--muted); font-size:.78rem; }
 .workbook-status > span { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 .workbook-status strong { color:#35525b; font-weight:650; }
 .ready-dot { background:#078575; width:7px; height:7px; border-radius:50%; }
-.explore-controls { background:white; border:1px solid var(--border); border-radius:16px; padding:24px; box-shadow:0 3px 14px #163e4a06; }
-.explore-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px; }
-.explore-heading h2 { margin:4px 0 0; font-size:1.6rem; letter-spacing:-.04em; }
+.explore-controls { background:white; border:1px solid var(--border); border-radius:16px; padding:20px; box-shadow:0 3px 14px #163e4a06; }
+.explore-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:14px; }
+.explore-heading h2 { margin:0; font-size:1.3rem; letter-spacing:-.04em; }
 .explore-heading .eyebrow { margin:0; }
 .view-switch { display:flex; padding:4px; border-radius:10px; background:#edf3f4; gap:4px; }
 .view-switch button { border:0; background:transparent; color:#536a73; padding:9px 15px; border-radius:7px; font-size:.8rem; font-weight:700; cursor:pointer; }
 .view-switch button.is-active { background:white; color:#08786e; box-shadow:0 1px 5px #17394414; }
 .explore-selectors { display:grid; grid-template-columns:1fr 1fr 1.35fr; gap:16px; }
+.explore-selectors:has(#breakdownFieldWrap.hidden) { grid-template-columns:1fr 1fr; }
 .explore-selectors select { width:100%; }
-.explore-filters { margin-top:18px; padding-top:14px; border-top:1px solid #e5eded; }
+.explore-filters { margin-top:14px; padding-top:10px; border-top:1px solid #e5eded; }
 .explore-filters summary { cursor:pointer; color:#425c66; font-size:.82rem; font-weight:650; width:fit-content; }
 .filter-help { color:var(--muted); font-size:.78rem; line-height:1.6; margin:12px 0; }
 .explorer-filter { padding:14px; margin:10px 0; border:1px solid var(--border); border-radius:10px; background:#f8fbfb; }
@@ -25,7 +26,7 @@
 .active-filters:empty { display:none; }
 .explorer .filter-chip { max-width:100%; }
 .explorer .filter-chip > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:650px; }
-.analysis-status { color:#557079; font-size:.81rem; padding:18px 4px; line-height:1.7; }
+.analysis-status { color:#557079; font-size:.81rem; padding:12px 4px; line-height:1.7; }
 .analysis-status strong { color:#234b55; }
 .explore-layout { display:grid; grid-template-columns:250px minmax(0,1fr); gap:26px; align-items:start; }
 .question-navigation { position:sticky; top:20px; background:white; border:1px solid var(--border); border-radius:14px; padding:18px; }
@@ -77,4 +78,4 @@
 button:disabled { opacity:.45; cursor:default; }
 @media (min-width:1600px) { .app-shell { max-width:1460px; } }
 @media (max-width:1050px) { .explore-layout { grid-template-columns:210px minmax(0,1fr); gap:18px; } .explore-selectors { grid-template-columns:1fr 1fr; } #breakdownFieldWrap { grid-column:1/-1; } }
-@media (max-width:750px) { .explore-layout { display:block; } .question-navigation { position:static; margin-bottom:18px; } #questionNav { max-height:160px; } .question-nav-heading { margin-top:14px; } .explore-heading { align-items:start; flex-direction:column; } .explore-controls { padding:18px; } .explore-selectors, .filter-top { grid-template-columns:1fr; } .filter-top > button { justify-self:end; } .workbook-status { align-items:start; } .workbook-status strong { max-width:60vw; overflow-wrap:anywhere; } .question-result-header { padding:17px 18px 12px; } .question-result-body { padding:14px 14px 18px; } .results-heading { flex-wrap:wrap; } }
+@media (max-width:750px) { .explore-layout { display:block; } .question-navigation { position:static; margin-bottom:18px; } #questionNav { max-height:160px; } .question-nav-heading { margin-top:14px; } .explore-heading { align-items:start; flex-direction:column; } .explore-controls { padding:18px; } .explore-selectors, .explore-selectors:has(#breakdownFieldWrap.hidden), .filter-top { grid-template-columns:1fr; } .filter-top > button { justify-self:end; } .workbook-status { align-items:start; } .workbook-status strong { max-width:60vw; overflow-wrap:anywhere; } .question-result-header { padding:17px 18px 12px; } .question-result-body { padding:14px 14px 18px; } .results-heading { flex-wrap:wrap; } }

@@ -1,4 +1,4 @@
-import { createModel, getView, getFields, getEntries, getFieldValues, hasAnswer, orderLabels } from './explorer-data.js?v=20261008-3';
+import { createModel, getView, getFields, getEntries, getFieldValues, hasAnswer, orderLabels } from './explorer-data.js?v=20261008-4';
 
 const $ = id => document.getElementById(id);
 const number = value => Number(value).toLocaleString('en-US', { maximumFractionDigits: 1 });
@@ -45,7 +45,7 @@ async function loadWorkbook(file) {
   try {
     const buffer = await file.arrayBuffer();
     const tables = await new Promise((resolve, reject) => {
-      const worker = new Worker('explorer-worker.js?v=20261008-3');
+      const worker = new Worker('explorer-worker.js?v=20261008-4');
       worker.onmessage = ({ data }) => {
         if (data.type === 'progress') uploadStatus(data.message);
         if (data.type === 'success') { worker.terminate(); resolve(data.tables); }
@@ -185,7 +185,8 @@ function renderAnalysis() {
   $('analysisStatus').innerHTML = `<strong>${number(cohort.length)}</strong> of ${number(base.entries.length)} ${escape(view.grain)} in this view${active.length ? ` · ${active.length} active filter${active.length > 1 ? 's' : ''}` : ''}${breakdown ? ` · ${number(context.groups.length)} breakdown groups` : ''}${siteCount ? ` · ${number(siteCount)} sites` : ''}${granteeCount ? ` · ${number(granteeCount)} grantees` : ''}`;
   $('resultsTitle').textContent = view.label;
   $('resultsContext').textContent = breakdown ? `Breakdown: ${sourceLabel(settings().source)} → ${breakdown.label}` : 'Overall responses · Add a breakdown to compare groups';
-  $('cohortNote').textContent = [base.cohortNote || view.cohortNote || '', 'Percentages use the people or records answering each question within each group. Missing breakdown values remain included.'].filter(Boolean).join(' ');
+  const variationNote = breakdown && context.groups.length === 1 ? (context.groups[0].key === MISSING ? 'No resolved values are available for this characteristic in this cohort; the records remain in the Missing / unresolved group.' : 'This breakdown has only one group in the current cohort. Choose another breakdown to compare groups.') : '';
+  $('cohortNote').textContent = [base.cohortNote || view.cohortNote || '', 'Percentages use the people or records answering each question within each group. Missing breakdown values remain included.', variationNote].filter(Boolean).join(' ');
   const diag = base.diagnostics || {};
   $('dataDetails').innerHTML = `<p><strong>Workbook</strong><br>${escape(fileName)}</p><p><strong>Counting unit</strong><br>${escape(view.grain)}. Results count records at this grain; they are not deduplicated across other surveys.</p><p>Site attributes matched: ${number(diag.siteMatched || 0)} of ${number(base.entries.length)}.<br>Grantee attributes matched: ${number(diag.granteeMatched || 0)} of ${number(base.entries.length)}.</p><p>Missing/unresolved site keys: ${number(diag.siteMissing || 0)}.<br>Ambiguous site keys: ${number(diag.siteAmbiguous || 0)}.<br>Missing/unresolved grantee keys: ${number(diag.granteeMissing || 0)}.<br>Ambiguous grantee keys: ${number(diag.granteeAmbiguous || 0)}.</p>${diag.multipleSiteFamilies ? `<p>${number(diag.multipleSiteFamilies)} families have children at multiple sites. Their family-level responses remain intact; use the child-question view for child/site comparisons.</p>` : ''}<p>Metadata and quality-control fields are excluded from the question lists. The original workbook remains unchanged.</p>`;
   renderQuestionList();
